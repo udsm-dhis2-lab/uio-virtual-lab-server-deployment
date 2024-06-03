@@ -31,4 +31,4 @@ cd uio-virtual-lab-server-deployment/instances
 cd instances/icare-connect
 ```
 
-### 4. Read the REAME.md file
+### 4. Read the README.md file
