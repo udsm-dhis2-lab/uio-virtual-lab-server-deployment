@@ -17,7 +17,6 @@ Follow these steps to set up and run any UiO Virtual Lab hosted instance.
 
 ```sh
 git clone https://github.com/udsm-dhis2-lab/uio-virtual-lab-server-deployment.git
-cd uio-virtual-lab-server-deployment
 ```
 
 ### 2. Navigate to instances folder in the Repository
