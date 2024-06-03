@@ -1,0 +1,99 @@
+version: '3.3'
+services:
+  openmrs-mysql:
+    restart: 'always'
+    image: mysql:5.7
+    container_name: icare-db
+    command: 'mysqld --character-set-server=utf8 --collation-server=utf8_general_ci'
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DB:-openmrs}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-Admin123}
+      MYSQL_USER: ${MYSQL_USER:-openmrs}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-Admin123}
+    healthcheck:
+      test: 'exit 0'
+    volumes:
+      - icareconnect-mysql-data:/var/lib/mysql
+      # - ./backup/latest.openmrs.sql.gz:/docker-entrypoint-initdb.d/database.sql.gz
+  icareconnect-core:
+    image: udsmdhis2/icare-core:${DOCKERTAG}
+    restart: 'always'
+    container_name: icare
+    depends_on:
+      - openmrs-mysql
+    environment:
+      DB_DATABASE: ${MYSQL_DB:-openmrs}
+      DB_HOST: icare-db
+      DB_USERNAME: ${MYSQL_USER:-openmrs}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-Admin123}
+      INNITIAL_HEAP_SIZE: 256m
+      MAX_HEAP_SIZE: 768m
+      PERMANENT_SIZE: 256m
+      MAX_PERMANENT_SIZE: 512m
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8080/openmrs/']
+      timeout: 300s
+    volumes:
+      - icareconnect-monitoring-data:/glowroot/data
+    ports:
+      - 8080:8080
+  mysql-cron-backup:
+    image: fradelg/mysql-cron-backup
+    container_name: icare-db-backup
+    depends_on:
+      - openmrs-mysql
+    volumes:
+      - icareconnect-backup-data:/backup
+    environment:
+      - MYSQL_HOST=icare-db
+      - MYSQL_USER=openmrs
+      - MYSQL_PASS=Admin123
+      - MAX_BACKUPS=15
+      - INIT_BACKUP=0
+      - CRON_TIME=0 3 * * *
+      - GZIP_LEVEL=9
+    restart: unless-stopped
+  offsite-backup:
+    image: udsmdhis2/icare-offsite-backup:1.0.0
+    container_name: icare-db-offsite-backup
+    volumes:
+      - icareconnect-backup-data:/backup
+    environment:
+      - FACILITY=demo
+      - BACKUP_INTERVAL=1800
+    restart: unless-stopped
+  adapterdb:
+    restart: 'always'
+    image: mariadb:10.4
+    environment:
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-unified}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD:-Admin123}
+      MARIADB_USER: ${MARIADB_USER:-unified}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD:-Admin123}
+    healthcheck:
+      test: 'exit 0'
+    volumes:
+      - icareconnect-adapter-data:/var/lib/mysql
+      - ./backup:/backup
+  adapter:
+    restart: 'always'
+    image: udsmdhis2/unified:1.0.0
+    container_name: icare-adapter
+    environment:
+      DB_HOST: adapterdb
+      DB_NAME: unified
+      DB_PASSWORD: Admin123
+      DB_USER: unified
+    ports:
+      - 8009:8080
+    depends_on:
+      - adapterdb
+networks:
+  default:
+    external:
+      name: icareconnect-network
+volumes:
+  icareconnect-mysql-data:
+  icareconnect-monitoring-data:
+  icareconnect-backup-data:
+  icareconnect-adapter-data:
