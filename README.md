@@ -1,6 +1,6 @@
 # UiO Virtual Lab Server Deployment
 
-This repository contains the Docker Compose configuration for deploying the UiO Virtual Lab Server. The setup includes several server setups with necessary configurations.
+This repository contains the Docker Compose configuration for deploying the UiO Virtual Lab Server. The setup includes several systems setup with necessary configurations.
 
 ## Prerequisites
 
