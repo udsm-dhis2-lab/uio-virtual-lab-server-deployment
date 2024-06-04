@@ -37,6 +37,7 @@ services:
       - icareconnect-monitoring-data:/glowroot/data
     ports:
       - 8080:8080
+      - 4000:4000
   mysql-cron-backup:
     image: fradelg/mysql-cron-backup
     container_name: icare-db-backup
