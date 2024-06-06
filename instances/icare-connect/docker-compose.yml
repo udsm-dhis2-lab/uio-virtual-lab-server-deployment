@@ -91,8 +91,8 @@ services:
       - adapterdb
 networks:
   default:
-    external:
-      name: icareconnect-network
+    external: true
+    name: icareconnect-network
 volumes:
   icareconnect-mysql-data:
   icareconnect-monitoring-data:
