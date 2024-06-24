@@ -1,0 +1,39 @@
+version: '3.2'
+
+services:
+  test-db:
+    container_name: test-db
+    image: postgis/postgis:13-3.2-alpine
+    command: postgres -c max_locks_per_transaction=1000 -c max_connections=3000
+    environment:
+      - POSTGRES_USER=dhis
+      - POSTGRES_DB=dhis
+      - POSTGRES_PASSWORD=dhis
+      - PGTZ=GMT+3
+    restart: always
+    volumes:
+      - db-volume:/var/lib/postgresql/data
+  test-dhis:
+    container_name: test-dhis
+    image: udsmdhis2/dhis2custom:2.39.5
+    restart: always
+    environment:
+      - DHIS2_HOME=/opt/dhis2
+      - WAIT_FOR_DB_CONTAINER=test-db:5432 -t 0
+    volumes:
+      - ./conf:/opt/dhis2
+    depends_on:
+      - test-db
+    ports:
+      - 8090:8080
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:8080/']
+      interval: 30s
+      timeout: 30s
+volumes:
+  db-volume:
+    driver: local
+networks:
+  default:
+    external:
+      name: dhis-network
